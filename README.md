@@ -1,3 +1,22 @@
+# 🏛️ GAAP – Government Application Automation Platform
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-gaap--frontend.onrender.com-blue)](https://gaap-frontend.onrender.com)
+[![GitHub](https://img.shields.io/badge/GitHub-RobotGit04-black)](https://github.com/RobotGit04/gaap-Government-Automation-Application-Platform)
+
+> Automates government applications in India — Passport, Driving License, 
+> Subsidies and more using OCR, KYC, eSign and smart retry logic.
+
+## 🔗 Live Demo
+- **Frontend:** https://gaap-frontend.onrender.com
+- **API Health:** https://gaap-backend.onrender.com/health
+
+## 👤 Demo Accounts
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@gaap.gov.in | admin@123 |
+| Agent | agent@gaap.gov.in | agent@123 |
+| Citizen | citizen@example.com | citizen@123 |
+
 # GAAP – Government Application Automation Platform
 
 > A full-stack SaaS platform that automates government applications in India — Passport, Driving License, Subsidies, and more.
