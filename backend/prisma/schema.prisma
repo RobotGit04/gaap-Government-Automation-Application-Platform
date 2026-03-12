@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CITIZEN
+  AGENT
+  ADMIN
+}
+
+enum ApplicationStatus {
+  DRAFT
+  DATA_COLLECTED
+  VALIDATED
+  SUBMITTED
+  FAILED
+  RETRYING
+  APPROVED
+  REJECTED
+}
+
+enum ApplicationType {
+  PASSPORT
+  DRIVING_LICENSE
+  SUBSIDY
+  BIRTH_CERTIFICATE
+  INCOME_CERTIFICATE
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  phone         String    @unique
+  name          String
+  passwordHash  String
+  role          Role      @default(CITIZEN)
+  isVerified    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  applications  Application[]
+  consents      ConsentRecord[]
+  agentClients  Application[]   @relation("AgentApplications")
+  auditLogs     AuditLog[]
+}
+
+model Application {
+  id              String            @id @default(cuid())
+  userId          String
+  agentId         String?
+  type            ApplicationType
+  status          ApplicationStatus @default(DRAFT)
+  currentStep     Int               @default(0)
+  totalSteps      Int               @default(5)
+  metadata        Json              @default("{}")
+  submittedAt     DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user            User              @relation(fields: [userId], references: [id])
+  agent           User?             @relation("AgentApplications", fields: [agentId], references: [id])
+  documents       Document[]
+  workflowSteps   WorkflowStep[]
+  retryLogs       RetryLog[]
+  verificationLog VerificationLog?
+  eSignRecord     ESignRecord?
+  auditLogs       AuditLog[]
+}
+
+model Document {
+  id              String    @id @default(cuid())
+  applicationId   String
+  type            String    // AADHAAR, PAN, PHOTO, etc.
+  fileName        String
+  fileUrl         String
+  ocrData         Json      @default("{}")
+  confidence      Float     @default(0)
+  verified        Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  application     Application @relation(fields: [applicationId], references: [id])
+}
+
+model WorkflowStep {
+  id              String    @id @default(cuid())
+  applicationId   String
+  stepNumber      Int
+  stepName        String
+  status          String    @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, FAILED
+  data            Json      @default("{}")
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+
+  application     Application @relation(fields: [applicationId], references: [id])
+}
+
+model RetryLog {
+  id              String    @id @default(cuid())
+  applicationId   String
+  attempt         Int
+  reason          String
+  errorCode       String?
+  retryAfter      DateTime?
+  success         Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  application     Application @relation(fields: [applicationId], references: [id])
+}
+
+model VerificationLog {
+  id              String    @id @default(cuid())
+  applicationId   String    @unique
+  aadhaarVerified Boolean   @default(false)
+  panVerified     Boolean   @default(false)
+  aadhaarNumber   String?
+  panNumber       String?
+  name            String?
+  dob             String?
+  address         String?
+  verifiedAt      DateTime?
+  createdAt       DateTime  @default(now())
+
+  application     Application @relation(fields: [applicationId], references: [id])
+}
+
+model ESignRecord {
+  id              String    @id @default(cuid())
+  applicationId   String    @unique
+  otpVerified     Boolean   @default(false)
+  signedAt        DateTime?
+  signatureHash   String?
+  ipAddress       String?
+  createdAt       DateTime  @default(now())
+
+  application     Application @relation(fields: [applicationId], references: [id])
+}
+
+model ConsentRecord {
+  id              String    @id @default(cuid())
+  userId          String
+  purpose         String
+  granted         Boolean
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime  @default(now())
+
+  user            User      @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id              String    @id @default(cuid())
+  userId          String?
+  applicationId   String?
+  action          String
+  details         Json      @default("{}")
+  ipAddress       String?
+  createdAt       DateTime  @default(now())
+
+  user            User?       @relation(fields: [userId], references: [id])
+  application     Application? @relation(fields: [applicationId], references: [id])
+}
