@@ -18,6 +18,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust Render's proxy (fixes express-rate-limit X-Forwarded-For error)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
@@ -27,9 +30,11 @@ app.use(cors({
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
   message: 'Too many requests from this IP',
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use('/api/', limiter);
 
@@ -46,8 +51,12 @@ app.use('/api/workflow', workflowRouter);
 app.use('/api/esign', esignRouter);
 
 // Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'GAAP API', timestamp: new Date().toISOString() });
+app.get('/health', (req: express.Request, res: express.Response) => {
+  res.json({ 
+    status: 'ok', 
+    service: 'GAAP API', 
+    timestamp: new Date().toISOString() 
+  });
 });
 
 // Error handler
